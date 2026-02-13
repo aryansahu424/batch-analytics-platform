@@ -22,4 +22,6 @@ jobs:
         run: python ingestion/transform.py
 
       - name: Load warehouse
+        env:
+          Neon_key: ${{ secrets.ENVIRONMENTS}}
         run: python warehouse/load.py
