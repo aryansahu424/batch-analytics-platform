@@ -9,6 +9,8 @@ st.write("API Key is loaded!")  # Don't print real secrets
 
 conn = psycopg2.connect(Neon_key)
 
+today_int = int(datetime.today().strftime('%Y%m%d'))
+
 # KPI Cards
 daily_revenue = pd.read_sql("""
     SELECT SUM(amount) AS total_revenue
@@ -65,4 +67,5 @@ channel_fail = pd.read_sql("""
 """, conn)
 fig_chan = px.bar(channel_fail, x='channel_name', y='failure_rate', title="Failure Rate by Channel")
 st.plotly_chart(fig_chan)
+
 
