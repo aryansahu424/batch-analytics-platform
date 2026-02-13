@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import psycopg2
 import plotly.express as px
+from datetime import datetime
 
 # Connect to your DB
 Neon_key = st.secrets["Neon_key"]
@@ -67,5 +68,6 @@ channel_fail = pd.read_sql("""
 """, conn)
 fig_chan = px.bar(channel_fail, x='channel_name', y='failure_rate', title="Failure Rate by Channel")
 st.plotly_chart(fig_chan)
+
 
 
