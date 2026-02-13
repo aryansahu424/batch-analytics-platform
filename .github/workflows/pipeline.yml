@@ -1,0 +1,25 @@
+name: Daily Batch Pipeline
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # runs daily at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run ingestion
+        run: python ingestion/ingest.py
+
+      - name: Transform data
+        run: python ingestion/transform.py
+
+      - name: Load warehouse
+        run: python warehouse/load.py

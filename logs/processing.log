@@ -1,0 +1,10 @@
+2026-02-13 13:42:01,329 - INFO - Starting transformation for 2026-02-12
+2026-02-13 13:42:01,389 - ERROR - Transformation failed | Error: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+ - `Import fastparquet` failed. fastparquet is required for parquet support. Use pip or conda to install the fastparquet package.
+2026-02-13 13:45:06,045 - INFO - Starting transformation for 2026-02-12
+2026-02-13 13:45:06,084 - ERROR - Transformation failed | Error: `Import pyarrow` failed. pyarrow is required for parquet support. Use pip or conda to install the pyarrow package.
+2026-02-13 13:46:41,545 - INFO - Starting transformation for 2026-02-12
+2026-02-13 13:46:41,769 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: C:\Users\Aryan Sahu\Documents\App Installer\mintifi_bnpl\batch-analytics-platform\data\processed\2026\02\12\cleaned_transactions.parquet
