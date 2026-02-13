@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 # Load environment variables from GitHub Secrets
 # ----------------------------
 
-DB_URL = os.environ.get("ENVIRONMETS")
+DB_URL = os.environ.get("ENVIRONMENTS")
 if not DB_URL:
     raise EnvironmentError("Missing DB_URL environment variable from GitHub Secrets")
 
