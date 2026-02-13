@@ -13,19 +13,19 @@ conn = psycopg2.connect(Neon_key)
 daily_revenue = pd.read_sql("""
     SELECT SUM(amount) AS total_revenue
     FROM fact_transactions
-    WHERE status='success' AND date_key = CURRENT_DATE
+    WHERE status='success' AND date_key = {today_int}
 """, conn).iloc[0,0]
 
 failure_rate = pd.read_sql("""
     SELECT COUNT(*) FILTER (WHERE status='failed')::float / COUNT(*) AS failure_rate
     FROM fact_transactions
-    WHERE date_key = CURRENT_DATE
+    WHERE date_key = {today_int}
 """, conn).iloc[0,0]
 
 avg_processing_time = pd.read_sql("""
     SELECT AVG(processing_time) AS avg_processing_time
     FROM fact_transactions
-    WHERE date_key = CURRENT_DATE
+    WHERE date_key = {today_int}
 """, conn).iloc[0,0]
 
 st.metric("Daily Revenue", f"${daily_revenue:,.2f}")
@@ -65,3 +65,4 @@ channel_fail = pd.read_sql("""
 """, conn)
 fig_chan = px.bar(channel_fail, x='channel_name', y='failure_rate', title="Failure Rate by Channel")
 st.plotly_chart(fig_chan)
+
