@@ -91,9 +91,21 @@ def load_to_neon(process_date: datetime = None):
                             "fee_percent": row['fee_percent']
                         }
                     )
+                fact_cols = [
+                    "transaction_id",
+                    "date_key",
+                    "customer_key",
+                    "channel_key",
+                    "amount",
+                    "status",
+                    "processing_time",
+                    "processing_delay_bucket",
+                    "revenue"
+                ]
+                df_fact = df[fact_cols]
 
                 # Load data into fact_transactions
-                df.to_sql(
+                df_fact.to_sql(
                     "fact_transactions",
                     conn,
                     if_exists="append",
