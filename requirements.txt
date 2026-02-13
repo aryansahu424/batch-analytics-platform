@@ -3,3 +3,5 @@ numpy
 pyarrow
 sqlalchemy
 psycopg2
+streamlit
+plotly
