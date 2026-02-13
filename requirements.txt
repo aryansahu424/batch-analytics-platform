@@ -9,3 +9,4 @@ rich
 pygments
 markdown-it-py
 mdurl
+faker

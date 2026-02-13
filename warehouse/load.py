@@ -71,7 +71,59 @@ def load_to_neon(process_date: datetime = None):
             # Connect to Neon
             engine = create_engine(DB_URL)
 
-            
+            # ------------------------
+            # 1️⃣ Load dim_date
+            # -----------------------
+            # 1. Prepare and calculate attributes
+            df_date = df[['date_key']].drop_duplicates().copy()
+            df_date['full_date'] = pd.to_datetime(df_date['date_key'].astype(str), format='%Y%m%d')
+            df_date['day'] = df_date['full_date'].dt.day
+            df_date['month'] = df_date['full_date'].dt.month
+            df_date['quarter'] = df_date['full_date'].dt.quarter
+            df_date['year'] = df_date['full_date'].dt.year
+            df_date['weekday_flag'] = (df_date['full_date'].dt.weekday < 5).astype(int)
+
+            # 2. Execute transaction with "UPSERT" logic
+            with engine.begin() as conn:
+                for _, row in df_date.iterrows():
+                    conn.execute(
+                        text("""
+                            INSERT INTO dim_date (
+                                date_key, 
+                                full_date, 
+                                day, 
+                                month, 
+                                quarter, 
+                                year, 
+                                weekday_flag
+                            )
+                            VALUES (
+                                :date_key, 
+                                :full_date, 
+                                :day, 
+                                :month, 
+                                :quarter, 
+                                :year, 
+                                :weekday_flag
+                            )
+                            ON CONFLICT (date_key) DO UPDATE SET
+                                full_date = EXCLUDED.full_date,
+                                day = EXCLUDED.day,
+                                month = EXCLUDED.month,
+                                quarter = EXCLUDED.quarter,
+                                year = EXCLUDED.year,
+                                weekday_flag = EXCLUDED.weekday_flag
+                        """),
+                        {
+                            "date_key": int(row['date_key']),
+                            "full_date": row['full_date'].date(),
+                            "day": int(row['day']),
+                            "month": int(row['month']),
+                            "quarter": int(row['quarter']),
+                            "year": int(row['year']),
+                            "weekday_flag": int(row['weekday_flag'])
+                        }
+                    )
             # ------------------------
             # 1️⃣ Load dim_channel
             # ------------------------
