@@ -72,7 +72,7 @@ def load_to_neon(process_date: datetime = None):
             df = df.drop_duplicates(subset=["customer_key"])
 
             df["signup_date"] = pd.to_datetime(df["signup_date"]).dt.date
-            df['customer_id'] = df['customer_id'].astype(int)
+            df['customer_id'] = df['customer_id'].astype(str)
 
             engine = create_engine(DB_URL)
 
