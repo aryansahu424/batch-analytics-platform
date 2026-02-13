@@ -101,11 +101,11 @@ def load_to_neon(process_date: datetime = None):
                 )
 
             logging.info(
-                f"Load successful | Date: {process_date.date()} | Records: {record_count}",
-                f"Channels loaded: {len(df_channels)}"
+                f"Load successful | Date: {process_date.date()} | "
+                f"Transactions: {record_count} | Channels loaded: {len(df_channels)}"
             )
-            print(f"✅ Successfully loaded {record_count} records into Neon.")
-            print(f"✅ Loaded {record_count} transactions and {len(df_channels)} channels into Neon.")
+
+            print(f"✅ Successfully loaded {record_count} transactions and {len(df_channels)} channels into Neon.")
             return
 
         except Exception as e:
