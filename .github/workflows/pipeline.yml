@@ -2,7 +2,7 @@ name: Daily Batch Pipeline
 
 on:
   schedule:
-    - cron: '0 2 * * *'   # runs daily at 2 AM UTC
+    - cron: '30 20 * * *'   # runs daily at 2 AM IST
   workflow_dispatch:
 
 jobs:
