@@ -19,7 +19,7 @@ jobs:
         run: python ingestion/ingest.py
 
       - name: Transform data
-        run: python ingestion/transform.py
+        run: python transformation/transform.py
 
       - name: Load warehouse
         env:
