@@ -2,13 +2,13 @@ import streamlit as st
 import pandas as pd
 import psycopg2
 import plotly.express as px
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # -----------------------
 # Page Config
 # -----------------------
 st.set_page_config(
-    page_title="Bath Analytics Dashboard",
+    page_title="Batch Analytics Dashboard",
     layout="wide"
 )
 
@@ -21,7 +21,8 @@ Neon_key = st.secrets["Neon_key"]
 conn = psycopg2.connect(Neon_key)
 
 # Convert today's date to YYYYMMDD integer
-today_int = int(datetime.today().strftime('%Y%m%d'))
+prev_day = datetime.today() - timedelta(days=1)
+today_int = int(prev_day.strftime('%Y%m%d'))
 
 # -----------------------
 # KPI Queries
@@ -163,3 +164,4 @@ fig_chan.update_layout(
     font=dict(color="#212121")
 )
 st.plotly_chart(fig_chan, use_container_width=True)
+
