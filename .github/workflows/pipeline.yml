@@ -16,7 +16,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run ingestion
-        run: python ingestion/ingest.py
+        run: |
+          python ingestion/ingest.py
+          python ingestion/dim_customer.py
 
       - name: Transform data
         run: python transformation/transform.py
@@ -24,4 +26,6 @@ jobs:
       - name: Load warehouse
         env:
           Neon_key: ${{ secrets.ENVIRONMENTS}}
-        run: python warehouse/load.py
+        run: |
+          python warehouse/load.py
+          python warehouse/load_dim_customer.py
