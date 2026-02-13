@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 # ----------------------------
 # Load environment variables from GitHub Secrets
@@ -71,18 +71,41 @@ def load_to_neon(process_date: datetime = None):
             # Connect to Neon
             engine = create_engine(DB_URL)
 
-            # Load data into fact_transactions
-            df.to_sql(
-                "fact_transactions",
-                engine,
-                if_exists="append",
-                index=False
-            )
+            
+            # ------------------------
+            # 1️⃣ Load dim_channel
+            # ------------------------
+            df_channels = df[['channel_key', 'channel_name', 'fee_percent']].drop_duplicates()
+
+            with engine.begin() as conn:  # Transaction block
+                for _, row in df_channels.iterrows():
+                    conn.execute(
+                        text("""
+                            INSERT INTO dim_channel (channel_key, channel_name, fee_percent)
+                            VALUES (:channel_key, :channel_name, :fee_percent)
+                            ON CONFLICT (channel_key) DO NOTHING
+                        """),
+                        {
+                            "channel_key": row['channel_key'],
+                            "channel_name": row['channel_name'],
+                            "fee_percent": row['fee_percent']
+                        }
+                    )
+
+                # Load data into fact_transactions
+                df.to_sql(
+                    "fact_transactions",
+                    conn,
+                    if_exists="append",
+                    index=False
+                )
 
             logging.info(
-                f"Load successful | Date: {process_date.date()} | Records: {record_count}"
+                f"Load successful | Date: {process_date.date()} | Records: {record_count}",
+                f"Channels loaded: {len(df_channels)}"
             )
             print(f"✅ Successfully loaded {record_count} records into Neon.")
+            print(f"✅ Loaded {record_count} transactions and {len(df_channels)} channels into Neon.")
             return
 
         except Exception as e:
