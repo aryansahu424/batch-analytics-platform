@@ -52,10 +52,11 @@ def get_latest_parquet(process_date: datetime):
 # ----------------------------
 def load_to_neon(process_date: datetime = None):
     if process_date is None:
-        process_date = datetime.now() - timedelta(days=1)
+        process_date = datetime.utcnow() - timedelta(days=1)
 
     attempt = 0
     while attempt < MAX_RETRIES:
+        engine = None
         try:
             logging.info(f"Starting load to Neon for {process_date.date()}")
 
@@ -69,80 +70,76 @@ def load_to_neon(process_date: datetime = None):
                 return
 
             # Connect to Neon
-            engine = create_engine(DB_URL)
-
-            # ------------------------
-            # 1️⃣ Load dim_date
-            # -----------------------
-            # 1. Prepare and calculate attributes
-            df_date = df[['date_key']].drop_duplicates().copy()
-            df_date['full_date'] = pd.to_datetime(df_date['date_key'].astype(str), format='%Y%m%d')
-            df_date['day'] = df_date['full_date'].dt.day
-            df_date['month'] = df_date['full_date'].dt.month
-            df_date['quarter'] = df_date['full_date'].dt.quarter
-            df_date['year'] = df_date['full_date'].dt.year
-            df_date['weekday_flag'] = (df_date['full_date'].dt.weekday < 5).astype(int)
-
-            # 2. Execute transaction with "UPSERT" logic
+            engine = create_engine(DB_URL, pool_pre_ping=True)
+            
             with engine.begin() as conn:
-                for _, row in df_date.iterrows():
-                    conn.execute(
-                        text("""
-                            INSERT INTO dim_date (
-                                date_key, 
-                                full_date, 
-                                day, 
-                                month, 
-                                quarter, 
-                                year, 
-                                weekday_flag
-                            )
-                            VALUES (
-                                :date_key, 
-                                :full_date, 
-                                :day, 
-                                :month, 
-                                :quarter, 
-                                :year, 
-                                :weekday_flag
-                            )
-                            ON CONFLICT (date_key) DO UPDATE SET
-                                full_date = EXCLUDED.full_date,
-                                day = EXCLUDED.day,
-                                month = EXCLUDED.month,
-                                quarter = EXCLUDED.quarter,
-                                year = EXCLUDED.year,
-                                weekday_flag = EXCLUDED.weekday_flag
-                        """),
-                        {
-                            "date_key": int(row['date_key']),
-                            "full_date": row['full_date'].date(),
-                            "day": int(row['day']),
-                            "month": int(row['month']),
-                            "quarter": int(row['quarter']),
-                            "year": int(row['year']),
-                            "weekday_flag": int(row['weekday_flag'])
-                        }
+            
+                # ------------------------
+                # 1️⃣ Load dim_date
+                # ------------------------
+                df_date = df[['date_key']].drop_duplicates().copy()
+                df_date['full_date'] = pd.to_datetime(
+                    df_date['date_key'].astype(str), format='%Y%m%d'
+                )
+                df_date['day'] = df_date['full_date'].dt.day
+                df_date['month'] = df_date['full_date'].dt.month
+                df_date['quarter'] = df_date['full_date'].dt.quarter
+                df_date['year'] = df_date['full_date'].dt.year
+                df_date['weekday_flag'] = (
+                    df_date['full_date'].dt.weekday < 5
+                ).astype(int)
+            
+                df_date.to_sql("tmp_dim_date", conn, if_exists="replace", index=False)
+            
+                conn.execute(text("""
+                    INSERT INTO dim_date (
+                        date_key, full_date, day, month,
+                        quarter, year, weekday_flag
                     )
-            # ------------------------
-            # 1️⃣ Load dim_channel
-            # ------------------------
-            df_channels = df[['channel_key', 'channel_name', 'fee_percent']].drop_duplicates()
-
-            with engine.begin() as conn:  # Transaction block
-                for _, row in df_channels.iterrows():
-                    conn.execute(
-                        text("""
-                            INSERT INTO dim_channel (channel_key, channel_name, fee_percent)
-                            VALUES (:channel_key, :channel_name, :fee_percent)
-                            ON CONFLICT (channel_key) DO NOTHING
-                        """),
-                        {
-                            "channel_key": row['channel_key'],
-                            "channel_name": row['channel_name'],
-                            "fee_percent": row['fee_percent']
-                        }
+                    SELECT
+                        date_key, full_date, day, month,
+                        quarter, year, weekday_flag
+                    FROM tmp_dim_date
+                    ON CONFLICT (date_key)
+                    DO UPDATE SET
+                        full_date = EXCLUDED.full_date,
+                        day = EXCLUDED.day,
+                        month = EXCLUDED.month,
+                        quarter = EXCLUDED.quarter,
+                        year = EXCLUDED.year,
+                        weekday_flag = EXCLUDED.weekday_flag
+                """))
+            
+                conn.execute(text("DROP TABLE tmp_dim_date"))
+            
+                # ------------------------
+                # 2️⃣ Load dim_channel
+                # ------------------------
+                df_channels = df[['channel_key', 'channel_name', 'fee_percent']].drop_duplicates()
+            
+                df_channels.to_sql("tmp_dim_channel", conn, if_exists="replace", index=False)
+            
+                conn.execute(text("""
+                    INSERT INTO dim_channel (
+                        channel_key, channel_name, fee_percent
                     )
+                    SELECT
+                        channel_key, channel_name, fee_percent
+                    FROM tmp_dim_channel
+                    ON CONFLICT (channel_key)
+                    DO UPDATE SET
+                        channel_name = EXCLUDED.channel_name,
+                        fee_percent = EXCLUDED.fee_percent
+                    WHERE
+                        dim_channel.channel_name IS DISTINCT FROM EXCLUDED.channel_name
+                        OR dim_channel.fee_percent IS DISTINCT FROM EXCLUDED.fee_percent
+                """))
+            
+                conn.execute(text("DROP TABLE tmp_dim_channel"))
+            
+                # ------------------------
+                # 3️⃣ Load fact_transactions
+                # ------------------------
                 fact_cols = [
                     "transaction_id",
                     "date_key",
@@ -154,22 +151,61 @@ def load_to_neon(process_date: datetime = None):
                     "processing_delay_bucket",
                     "revenue"
                 ]
+            
                 df_fact = df[fact_cols]
-
-                # Load data into fact_transactions
-                df_fact.to_sql(
-                    "fact_transactions",
-                    conn,
-                    if_exists="append",
-                    index=False
-                )
-
+            
+                df_fact.to_sql("tmp_fact_transactions", conn, if_exists="replace", index=False)
+            
+                conn.execute(text("""
+                    INSERT INTO fact_transactions (
+                        transaction_id,
+                        date_key,
+                        customer_key,
+                        channel_key,
+                        amount,
+                        status,
+                        processing_time,
+                        processing_delay_bucket,
+                        revenue
+                    )
+                    SELECT
+                        transaction_id,
+                        date_key,
+                        customer_key,
+                        channel_key,
+                        amount,
+                        status,
+                        processing_time,
+                        processing_delay_bucket,
+                        revenue
+                    FROM tmp_fact_transactions
+                    ON CONFLICT (transaction_id)
+                    DO UPDATE SET
+                        date_key = EXCLUDED.date_key,
+                        customer_key = EXCLUDED.customer_key,
+                        channel_key = EXCLUDED.channel_key,
+                        amount = EXCLUDED.amount,
+                        status = EXCLUDED.status,
+                        processing_time = EXCLUDED.processing_time,
+                        processing_delay_bucket = EXCLUDED.processing_delay_bucket,
+                        revenue = EXCLUDED.revenue
+                    WHERE
+                        fact_transactions.amount IS DISTINCT FROM EXCLUDED.amount
+                        OR fact_transactions.status IS DISTINCT FROM EXCLUDED.status
+                        OR fact_transactions.revenue IS DISTINCT FROM EXCLUDED.revenue
+                        OR fact_transactions.processing_time IS DISTINCT FROM EXCLUDED.processing_time
+                        OR fact_transactions.processing_delay_bucket IS DISTINCT FROM EXCLUDED.processing_delay_bucket
+                """))
+            
+                conn.execute(text("DROP TABLE tmp_fact_transactions"))
+    
+            
             logging.info(
                 f"Load successful | Date: {process_date.date()} | "
                 f"Transactions: {record_count} | Channels loaded: {len(df_channels)}"
             )
-
-            print(f"✅ Successfully loaded {record_count} transactions and {len(df_channels)} channels into Neon.")
+            
+            print(f"✅ Successfully loaded {record_count} transactions into Neon.")
             return
 
         except Exception as e:
@@ -186,6 +222,10 @@ def load_to_neon(process_date: datetime = None):
                     f"Load failed after {MAX_RETRIES} attempts for {process_date.date()}"
                 )
                 raise
+                
+        finally:
+            if engine is not None:
+                engine.dispose()
 
 # ----------------------------
 # CLI support
