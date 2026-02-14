@@ -37,8 +37,8 @@ prev_day = datetime.today() - timedelta(days=1)
 today_int = int(prev_day.strftime('%Y%m%d'))
 
 @st.cache_data(ttl=600)
-def get_kpis(conn, today_int, selected_channel):
-
+def get_kpis(today_int, selected_channel):
+    conn = psycopg2.connect(st.secrets["Neon_key"]) 
     base_query = """
         FROM fact_transactions f
         JOIN dim_channel c ON f.channel_key = c.channel_key
@@ -71,7 +71,7 @@ def get_kpis(conn, today_int, selected_channel):
     daily_revenue = pd.read_sql(daily_revenue_query, conn, params=params).iloc[0,0] or 0
     failure_rate = pd.read_sql(failure_rate_query, conn, params=params).iloc[0,0] or 0
     avg_processing_time = pd.read_sql(avg_proc_query, conn, params=params).iloc[0,0] or 0
-
+    conn.close()
     return daily_revenue, failure_rate, avg_processing_time
 
 channel_list_query = """
@@ -83,13 +83,13 @@ channels_df = pd.read_sql(channel_list_query, conn)
 
 channel_options = ["All"] + channels_df["channel_name"].tolist()
 
-st.sidebar.header("Filters")
 selected_channel = st.sidebar.selectbox(
     "Channel",
     channel_options
 )
 st.caption(f"Showing data for: {selected_channel}")
 
+channel_title = selected_channel if selected_channel != "All" else "All Channels"
 
 
 
@@ -97,7 +97,7 @@ st.caption(f"Showing data for: {selected_channel}")
 # KPI Queries
 # -----------------------
 
-daily_revenue, failure_rate, avg_processing_time = get_kpis(conn, today_int, selected_channel)
+daily_revenue, failure_rate, avg_processing_time = get_kpis(today_int, selected_channel)
 
 # -----------------------
 # KPI Cards Layout
@@ -164,7 +164,7 @@ fig_rev = px.line(
     revenue_trend, 
     x='full_date', 
     y='total_revenue', 
-    title=f"Revenue Trend ({selected_channel})",
+    title=f"Revenue Trend for {channel_title}",
     markers=True
 )
 fig_rev.add_scatter(
@@ -172,7 +172,7 @@ fig_rev.add_scatter(
     y=revenue_trend['7_day_avg'],
     mode='lines',
     name='7 Day Avg',
-    line=dict(width=3, dash='dash')
+    line=dict(width=3, dash='solid')
 )
 fig_rev.update_traces(
     hovertemplate="₹%{y:,.0f}<extra></extra>"
@@ -214,7 +214,7 @@ fig_fail = px.line(
     failure_trend,
     x='full_date',
     y='failure_rate',
-    title=f"Failure Rate Trend ({selected_channel})",
+    title=f"Failure Rate Trend for {channel_title}",
     markers=True
 )
 fig_fail.update_layout(
@@ -263,6 +263,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
