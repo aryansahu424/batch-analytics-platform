@@ -83,9 +83,10 @@ channels_df = pd.read_sql(channel_list_query, conn)
 
 channel_options = ["All"] + channels_df["channel_name"].tolist()
 
-selected_channel = st.sidebar.selectbox(
-    "Channel",
-    channel_options
+selected_channel = st.selectbox(
+    "Choose a channel to view data:",
+    channel_options,
+    index=0  # Default to "All"
 )
 st.caption(f"Showing data for: {selected_channel}")
 
@@ -180,7 +181,9 @@ fig_rev.update_traces(
 fig_rev.update_layout(
     plot_bgcolor='#F8F9FA', 
     paper_bgcolor='#F8F9FA', 
-    font=dict(color="#212121")
+    font=dict(color="#212121"),
+    xaxis_title="Date",
+    yaxis_title="Total Revenue"
 )
 fig_rev.update_yaxes(tickprefix="₹", separatethousands=True)
 st.plotly_chart(fig_rev, use_container_width=True)
@@ -221,9 +224,9 @@ fig_fail.update_layout(
     plot_bgcolor='#F8F9FA', 
     paper_bgcolor='#F8F9FA', 
     font=dict(color="#212121"),
-    yaxis_title="Failure Rate (%)"
+    yaxis_title="Failure Rate (%)",
+    xaxis_title="Date"
 )
-fig_fail.update_yaxes(suffix="%")
 st.plotly_chart(fig_fail, use_container_width=True)
 
 # -----------------------
@@ -257,12 +260,14 @@ if selected_channel == "All":
     fig_chan.update_traces(textposition='inside')
     fig_chan.update_layout(
         yaxis_title="Failure Rate (%)",
+        xaxis_title="Channel Name",
         plot_bgcolor='#F8F9FA',
         paper_bgcolor='#F8F9FA',
         font=dict(color="#212121")
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
