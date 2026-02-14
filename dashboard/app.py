@@ -20,8 +20,6 @@ body {
 """, unsafe_allow_html=True)
 
 
-st.markdown("<h1 style='text-align:center;'>Dashboard</h1>", unsafe_allow_html=True)
-
 # -----------------------
 # Database Connection
 # -----------------------
@@ -83,12 +81,19 @@ channels_df = pd.read_sql(channel_list_query, conn)
 
 channel_options = ["All"] + channels_df["channel_name"].tolist()
 
-selected_channel = st.selectbox(
-    "Choose a channel to view data:",
-    channel_options,
-    index=0  # Default to "All"
-)
-st.caption(f"Showing data for: {selected_channel}")
+# Top row with title and dropdown on right
+col_left, col_right = st.columns([4,1])  # wider left for title, narrow right for dropdown
+
+with col_left:
+    st.markdown("<h1 style='text-align:left;'>Dashboard</h1>", unsafe_allow_html=True)
+
+with col_right:
+    selected_channel = st.selectbox(
+        "",  # empty label for compact look
+        channel_options,
+        index=0
+    )
+    st.caption(f"Showing data for: {selected_channel}")
 
 channel_title = selected_channel if selected_channel != "All" else "All Channels"
 
@@ -267,6 +272,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
