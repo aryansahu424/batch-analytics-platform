@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 # Page Config
 # -----------------------
 st.set_page_config(
-    page_title="Batch Analytics Dashboard",
+    page_title="Revenue Analytics Dashboard",
     layout="wide"
 )
 st.markdown("""
@@ -85,7 +85,7 @@ channel_options = ["All"] + channels_df["channel_name"].tolist()
 col_left, col_right = st.columns([4,1])  # wider left for title, narrow right for dropdown
 
 with col_left:
-    st.markdown("<h1 style='text-align:left;'>Dashboard</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:left;'>Revenue Analytics Dashboard</h1>", unsafe_allow_html=True)
 
 with col_right:
     selected_channel = st.selectbox(
@@ -272,6 +272,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
