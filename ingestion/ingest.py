@@ -83,6 +83,7 @@ def save_transactions(df: pd.DataFrame, process_date: datetime):
     output_file = output_dir / "transactions.csv"
 
     df.to_csv(output_file, index=False)
+    print("Saving to:", output_dir)
     return output_file
 
 
