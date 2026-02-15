@@ -2,3 +2,5 @@
 2026-02-13 13:37:50,727 - INFO - Ingestion successful | Date: 2026-02-12 | Records: 500 | File: C:\Users\Aryan Sahu\Documents\App Installer\mintifi_bnpl\batch-analytics-platform\data\raw\2026\02\12\transactions.csv
 2026-02-15 10:51:10,674 - INFO - Starting ingestion for 2026-02-14
 2026-02-15 10:51:10,684 - INFO - Ingestion successful | Date: 2026-02-14 | Records: 500 | File: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/raw/2026/02/14/transactions.csv
+2026-02-15 10:55:08,456 - INFO - Starting ingestion for 2026-02-14
+2026-02-15 10:55:08,465 - INFO - Ingestion successful | Date: 2026-02-14 | Records: 500 | File: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/raw/2026/02/14/transactions.csv
