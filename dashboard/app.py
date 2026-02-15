@@ -31,8 +31,7 @@ conn = get_connection()
 
 
 # Convert today's date to YYYYMMDD integer
-prev_day = datetime.today() - timedelta(days=1)
-today_int = int(prev_day.strftime('%Y%m%d'))
+today_int = int(datetime.today().strftime('%Y%m%d'))
 
 @st.cache_data(ttl=600)
 def get_kpis(today_int, selected_channel):
@@ -168,8 +167,8 @@ revenue_trend['7_day_avg'] = revenue_trend['total_revenue'].rolling(7).mean()
 
 fig_rev = px.line(
     revenue_trend, 
-    x='full_date', 
-    y='total_revenue', 
+    x='Date', 
+    y='Total Revenue', 
     title=f"Revenue Trend for {channel_title}",
     markers=True
 )
@@ -220,8 +219,8 @@ failure_trend['failure_rate'] = (failure_trend['failure_rate'] * 100).round(0)
 
 fig_fail = px.line(
     failure_trend,
-    x='full_date',
-    y='failure_rate',
+    x='Date',
+    y='Failure Rate',
     title=f"Failure Rate Trend for {channel_title}",
     markers=True
 )
@@ -254,8 +253,8 @@ if selected_channel == "All":
 
     fig_chan = px.bar(
         channel_fail,
-        x='channel_name',
-        y='failure_rate',
+        x='Channel Name',
+        y='Failure Rate',
         title="Failure Rate by Channel",
         text=channel_fail['failure_rate'].astype(int).astype(str) + '%',
         color='failure_rate',
@@ -272,6 +271,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
