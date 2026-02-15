@@ -167,8 +167,8 @@ revenue_trend['7_day_avg'] = revenue_trend['total_revenue'].rolling(7).mean()
 
 fig_rev = px.line(
     revenue_trend, 
-    x='Date', 
-    y='Total Revenue', 
+    x='full_date', 
+    y='total_revenue', 
     title=f"Revenue Trend for {channel_title}",
     markers=True
 )
@@ -219,8 +219,8 @@ failure_trend['failure_rate'] = (failure_trend['failure_rate'] * 100).round(0)
 
 fig_fail = px.line(
     failure_trend,
-    x='Date',
-    y='Failure Rate',
+    x='full_date',
+    y='failure_rate',
     title=f"Failure Rate Trend for {channel_title}",
     markers=True
 )
@@ -253,8 +253,8 @@ if selected_channel == "All":
 
     fig_chan = px.bar(
         channel_fail,
-        x='Channel Name',
-        y='Failure Rate',
+        x='channel_name',
+        y='failure_rate',
         title="Failure Rate by Channel",
         text=channel_fail['failure_rate'].astype(int).astype(str) + '%',
         color='failure_rate',
@@ -271,6 +271,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
