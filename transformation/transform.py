@@ -117,6 +117,7 @@ def run_transformation():
         output_dir.mkdir(parents=True, exist_ok=True)
 
         output_file = output_dir / "cleaned_transactions.parquet"
+        print("Saving to:", output_dir)
 
         df.to_parquet(output_file, index=False, engine="pyarrow")
 
