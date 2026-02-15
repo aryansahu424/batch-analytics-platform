@@ -7,8 +7,6 @@ import pandas as pd
 import time
 import argparse
 
-random.seed(42) 
-
 # ----------------------------
 # Configuration
 # ----------------------------
