@@ -31,7 +31,8 @@ conn = get_connection()
 
 
 # Convert today's date to YYYYMMDD integer
-today_int = int(datetime.today().strftime('%Y%m%d'))
+prev_day = datetime.today() - timedelta(days=1)
+today_int = int(prev_day.strftime('%Y%m%d'))
 
 @st.cache_data(ttl=600)
 def get_kpis(today_int, selected_channel):
@@ -162,7 +163,7 @@ revenue_trend_query += """
 """
 
 revenue_trend = pd.read_sql(revenue_trend_query, conn, params=params)
-revenue_trend['7_day_avg'] = revenue_trend['total_revenue'].rolling(7).mean()
+revenue_trend['7_day_avg'] = revenue_trend['total_revenue'].rolling(7, min_periods=1).mean()
 
 
 fig_rev = px.line(
@@ -177,10 +178,11 @@ fig_rev.add_scatter(
     y=revenue_trend['7_day_avg'],
     mode='lines',
     name='7 Day Avg',
-    line=dict(width=3, dash='solid')
+    line=dict(width=3, dash='solid'),
+    hovertemplate="%{x}<br>₹%{y:,.0f}<extra></extra>" 
 )
 fig_rev.update_traces(
-    hovertemplate="₹%{y:,.0f}<extra></extra>"
+    hovertemplate="%{x}<br>₹%{y:,.0f}<extra></extra>"
 )
 fig_rev.update_layout(
     plot_bgcolor='#F8F9FA', 
@@ -224,6 +226,9 @@ fig_fail = px.line(
     title=f"Failure Rate Trend for {channel_title}",
     markers=True
 )
+fig_fail.update_traces(
+    hovertemplate="%{x}<br>%{y:.0f}%"  # %{x} = date, %{y} = failure rate in %
+)
 fig_fail.update_layout(
     plot_bgcolor='#F8F9FA', 
     paper_bgcolor='#F8F9FA', 
@@ -261,7 +266,7 @@ if selected_channel == "All":
         color_continuous_scale='reds'
     )
 
-    fig_chan.update_traces(textposition='inside')
+    fig_chan.update_traces(textposition='inside', hovertemplate="%{x}<br>%{y:.0f}%")
     fig_chan.update_layout(
         yaxis_title="Failure Rate (%)",
         xaxis_title="Channel Name",
@@ -271,6 +276,7 @@ if selected_channel == "All":
     )
 
     st.plotly_chart(fig_chan, use_container_width=True)
+
 
 
 
