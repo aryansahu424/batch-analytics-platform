@@ -145,6 +145,7 @@ def load_to_neon(process_date: datetime = None):
                     "date_key",
                     "customer_key",
                     "channel_key",
+                    "city_key",
                     "amount",
                     "status",
                     "processing_time",
@@ -162,6 +163,7 @@ def load_to_neon(process_date: datetime = None):
                         date_key,
                         customer_key,
                         channel_key,
+                        city_key,
                         amount,
                         status,
                         processing_time,
@@ -173,6 +175,7 @@ def load_to_neon(process_date: datetime = None):
                         date_key,
                         customer_key,
                         channel_key,
+                        city_key,
                         amount,
                         status,
                         processing_time,
@@ -184,6 +187,7 @@ def load_to_neon(process_date: datetime = None):
                         date_key = EXCLUDED.date_key,
                         customer_key = EXCLUDED.customer_key,
                         channel_key = EXCLUDED.channel_key,
+                        city_key = EXCLUDED.city_key,
                         amount = EXCLUDED.amount,
                         status = EXCLUDED.status,
                         processing_time = EXCLUDED.processing_time,
@@ -195,6 +199,7 @@ def load_to_neon(process_date: datetime = None):
                         OR fact_transactions.revenue IS DISTINCT FROM EXCLUDED.revenue
                         OR fact_transactions.processing_time IS DISTINCT FROM EXCLUDED.processing_time
                         OR fact_transactions.processing_delay_bucket IS DISTINCT FROM EXCLUDED.processing_delay_bucket
+                        OR fact_transactions.city_key IS DISTINCT FROM EXCLUDED.city_key
                 """))
             
                 conn.execute(text("DROP TABLE tmp_fact_transactions"))

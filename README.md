@@ -87,12 +87,20 @@ CREATE TABLE dim_customer (
     segment VARCHAR(50)
 );
 
+CREATE TABLE dim_city (
+    city_key INT PRIMARY KEY,
+    city_name VARCHAR(100),
+    state VARCHAR(100),
+    region VARCHAR(50)
+);
+
 -- Fact Table
 CREATE TABLE fact_transactions (
     transaction_id VARCHAR(50) PRIMARY KEY,
     date_key INT REFERENCES dim_date(date_key),
-    customer_key INT,
+    customer_key INT REFERENCES dim_customer(customer_key),
     channel_key INT REFERENCES dim_channel(channel_key),
+    city_key INT REFERENCES dim_city(city_key),
     amount DECIMAL(10,2),
     status VARCHAR(20),
     processing_time DECIMAL(5,2),
@@ -154,19 +162,34 @@ Access at `https://batch-analytics-platform.streamlit.app`
 ### 4. Dashboard (`dashboard/app.py`)
 
 **KPIs:**
-- Daily Revenue
+- Total Revenue (successful transactions only)
 - Failure Rate
 - Average Processing Time
 
-**Visualizations:**
+**Dynamic Filters:**
+- Date range selector
+- City/State/Region (cascading filters)
+- Channel
+- Customer Segment
+
+**Trend Charts:**
 - Revenue trend with 7-day moving average
-- Failure rate trend over time
-- Channel comparison (when "All" selected)
+- Failure rate trend with 7-day moving average
+- Avg processing time trend with 7-day moving average
+- Dynamic breakdown: Shows top 4 items when filter set to "All"
+
+**Comparison Charts:**
+- Default: Failure Rate & Avg Processing Time by Channel
+- Single filter: Top 6 items by selected dimension
+- Adaptive titles based on data availability
 
 **Features:**
-- Channel-level filtering
+- Multi-dimensional filtering with cascading options
+- Glass morphism UI design
+- Interactive hover tooltips with series names
+- Horizontal legends positioned inside charts
 - Auto-refresh every 10 minutes
-- Responsive design
+- Responsive layout
 
 ## CI/CD
 
