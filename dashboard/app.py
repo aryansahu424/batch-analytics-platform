@@ -480,7 +480,7 @@ if breakdown_config:
         x='full_date',
         y='revenue',
         color='breakdown_value',
-        title=f"Revenue Trend - {breakdown_config['title']}",
+        title=f"Revenue Trend - {breakdown_config['title']}{' (' + trend_start.strftime('%d-%b-%Y') + ' to ' + trend_end.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         markers=True
     )
     
@@ -527,7 +527,7 @@ else:
         rev_df,
         x='full_date',
         y='total_revenue',
-        title=f"Revenue Trend{filter_suffix}",
+        title=f"Revenue Trend{filter_suffix}{' (' + trend_start.strftime('%d-%b-%Y') + ' to ' + trend_end.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         markers=True
     )
     fig_rev.add_scatter(
@@ -554,6 +554,8 @@ st.plotly_chart(fig_rev, use_container_width=True, config={'displayModeBar': Fal
 # -----------------------
 # Failure Rate Trend
 # -----------------------
+trend_date_suffix = f" ({trend_start.strftime('%d-%b-%Y')} to {trend_end.strftime('%d-%b-%Y')})" if "Date" in selected_filters else ""
+
 if breakdown_config:
     # Show top 4 breakdown + total
     fail_breakdown_query = f"""
@@ -601,7 +603,7 @@ if breakdown_config:
         x='full_date',
         y='failure_rate',
         color='breakdown_value',
-        title=f"Failure Rate Trend - {breakdown_config['title']}",
+        title=f"Failure Rate Trend - {breakdown_config['title']}{trend_date_suffix}",
         markers=True
     )
     
@@ -654,7 +656,7 @@ else:
         failure_trend,
         x='full_date',
         y='failure_rate',
-        title=f"Failure Rate Trend{filter_suffix}",
+        title=f"Failure Rate Trend{filter_suffix}{trend_date_suffix}",
         markers=True
     )
     fig_fail.add_scatter(
@@ -727,7 +729,7 @@ if breakdown_config:
         x='full_date',
         y='avg_processing_time',
         color='breakdown_value',
-        title=f"Avg Processing Time Trend - {breakdown_config['title']}",
+        title=f"Avg Processing Time Trend - {breakdown_config['title']}{trend_date_suffix}",
         markers=True
     )
     
@@ -773,7 +775,7 @@ else:
         proc_trend,
         x='full_date',
         y='avg_processing_time',
-        title=f"Avg Processing Time Trend{filter_suffix}",
+        title=f"Avg Processing Time Trend{filter_suffix}{trend_date_suffix}",
         markers=True
     )
     fig_proc.add_scatter(
@@ -822,7 +824,7 @@ if num_active_filters == 0:
         channel_fail,
         x='channel_name',
         y='failure_rate',
-        title="Failure Rate by Channel",
+        title=f"Failure Rate by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         text=channel_fail['failure_rate'].round(1).astype(str) + '%'
     )
     fig_fail_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.1f}%<extra></extra>", width=0.4, cliponaxis=False)
@@ -853,7 +855,7 @@ if num_active_filters == 0:
         channel_proc,
         x='channel_name',
         y='avg_processing_time',
-        title="Avg Processing Time by Channel",
+        title=f"Avg Processing Time by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         text=channel_proc['avg_processing_time'].round(2).astype(str) + 's'
     )
     fig_proc_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.2f}s<extra></extra>", width=0.4, cliponaxis=False)
@@ -895,7 +897,8 @@ elif num_active_filters == 1:
     """
     
     fail_data = pd.read_sql(fail_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    fail_title = f"Failure Rate by Top 6 {label}s" if len(fail_data) == 6 else f"Failure Rate by {label}"
+    date_suffix = f" ({start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')})" if "Date" in selected_filters else ""
+    fail_title = (f"Failure Rate by Top 6 {label}s" if len(fail_data) == 6 else f"Failure Rate by {label}") + date_suffix
     
     fig_fail_comp = px.bar(
         fail_data,
@@ -930,7 +933,7 @@ elif num_active_filters == 1:
     """
     
     proc_data = pd.read_sql(proc_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    proc_title = f"Avg Processing Time by Top 6 {label}s" if len(proc_data) == 6 else f"Avg Processing Time by {label}"
+    proc_title = (f"Avg Processing Time by Top 6 {label}s" if len(proc_data) == 6 else f"Avg Processing Time by {label}") + date_suffix
     
     fig_proc_comp = px.bar(
         proc_data,
@@ -969,7 +972,7 @@ else:
         channel_fail,
         x='channel_name',
         y='failure_rate',
-        title="Failure Rate by Channel",
+        title=f"Failure Rate by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         text=channel_fail['failure_rate'].round(1).astype(str) + '%'
     )
     fig_fail_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.1f}%<extra></extra>", width=0.4, cliponaxis=False)
@@ -1000,7 +1003,7 @@ else:
         channel_proc,
         x='channel_name',
         y='avg_processing_time',
-        title="Avg Processing Time by Channel",
+        title=f"Avg Processing Time by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
         text=channel_proc['avg_processing_time'].round(2).astype(str) + 's'
     )
     fig_proc_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.2f}s<extra></extra>", width=0.4, cliponaxis=False)
