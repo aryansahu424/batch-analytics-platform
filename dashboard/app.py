@@ -38,12 +38,10 @@ body {
 # -----------------------
 # Database Connection
 # -----------------------
-# @st.cache_resource
-# def get_connection():
-#     return psycopg2.connect(st.secrets["Neon_key"])
-
+@st.cache_resource
 def get_connection():
-    return psycopg2.connect("postgresql://neondb_owner:npg_3GdMW2cEaLOt@ep-crimson-queen-ai5epeaj-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+    return psycopg2.connect(st.secrets["Neon_key"])
+
 conn = get_connection()
 
 
@@ -963,6 +961,7 @@ else:
         yaxis=dict(range=[0, channel_proc['avg_processing_time'].max() * 1.15])
     )
     st.plotly_chart(fig_proc_comp, use_container_width=True, config={'displayModeBar': False})
+
 
 
 
