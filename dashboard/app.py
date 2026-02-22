@@ -38,10 +38,12 @@ body {
 # -----------------------
 # Database Connection
 # -----------------------
-@st.cache_resource
-def get_connection():
-    return psycopg2.connect(st.secrets["Neon_key"])
+# @st.cache_resource
+# def get_connection():
+#     return psycopg2.connect(st.secrets["Neon_key"])
 
+def get_connection():
+    return psycopg2.connect("postgresql://neondb_owner:npg_3GdMW2cEaLOt@ep-crimson-queen-ai5epeaj-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
 conn = get_connection()
 
 
@@ -801,88 +803,26 @@ st.plotly_chart(fig_proc, use_container_width=True, config={'displayModeBar': Fa
 # -----------------------
 # Comparison Charts (Failure Rate & Avg Processing Time)
 # -----------------------
-# Determine what to show based on filters
-active_filters = [k for k, v in filters_dict.items() if v != "All"]
-num_active_filters = len(active_filters)
+# Determine dimension for bar charts
+bar_dimension = None
+bar_limit = 10
 
-if num_active_filters == 0:
-    # Default: Show by Channel
-    # Failure Rate by Channel
-    channel_fail_query = f"""
-        SELECT c.channel_name,
-               COUNT(*) FILTER (WHERE f.status='failed')::float / NULLIF(COUNT(*),0) * 100 AS failure_rate
-        FROM fact_transactions f
-        LEFT JOIN dim_channel c ON f.channel_key = c.channel_key
-        WHERE f.date_key BETWEEN %s AND %s
-        GROUP BY c.channel_name
-        ORDER BY failure_rate DESC
-    """
-    
-    channel_fail = pd.read_sql(channel_fail_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    
-    fig_fail_comp = px.bar(
-        channel_fail,
-        x='channel_name',
-        y='failure_rate',
-        title=f"Failure Rate by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
-        text=channel_fail['failure_rate'].round(1).astype(str) + '%'
-    )
-    fig_fail_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.1f}%<extra></extra>", width=0.4, cliponaxis=False)
-    fig_fail_comp.update_layout(
-        yaxis_title="Failure Rate (%)",
-        xaxis_title="Channel",
-        plot_bgcolor='#F8F9FA',
-        paper_bgcolor='#F8F9FA',
-        font=dict(color="#212121"),
-        yaxis=dict(range=[0, channel_fail['failure_rate'].max() * 1.15])
-    )
-    st.plotly_chart(fig_fail_comp, use_container_width=True, config={'displayModeBar': False})
-    
-    # Avg Processing Time by Channel
-    channel_proc_query = f"""
-        SELECT c.channel_name,
-               AVG(f.processing_time) AS avg_processing_time
-        FROM fact_transactions f
-        LEFT JOIN dim_channel c ON f.channel_key = c.channel_key
-        WHERE f.date_key BETWEEN %s AND %s
-        GROUP BY c.channel_name
-        ORDER BY avg_processing_time DESC
-    """
-    
-    channel_proc = pd.read_sql(channel_proc_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    
-    fig_proc_comp = px.bar(
-        channel_proc,
-        x='channel_name',
-        y='avg_processing_time',
-        title=f"Avg Processing Time by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
-        text=channel_proc['avg_processing_time'].round(2).astype(str) + 's'
-    )
-    fig_proc_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.2f}s<extra></extra>", width=0.4, cliponaxis=False)
-    fig_proc_comp.update_layout(
-        yaxis_title="Avg Processing Time (sec)",
-        xaxis_title="Channel",
-        plot_bgcolor='#F8F9FA',
-        paper_bgcolor='#F8F9FA',
-        font=dict(color="#212121"),
-        yaxis=dict(range=[0, channel_proc['avg_processing_time'].max() * 1.15])
-    )
-    st.plotly_chart(fig_proc_comp, use_container_width=True, config={'displayModeBar': False})
+# Check if City/State/Region/Segment filter is set to "All"
+if "City" in selected_filters and filters_dict.get("city") == "All":
+    bar_dimension = ("ci.city_name", "City")
+elif "State" in selected_filters and filters_dict.get("state") == "All":
+    bar_dimension = ("ci.state", "State")
+elif "Region" in selected_filters and filters_dict.get("region") == "All":
+    bar_dimension = ("ci.region", "Region")
+elif "Segment" in selected_filters and filters_dict.get("segment") == "All":
+    bar_dimension = ("cu.segment", "Segment")
 
-elif num_active_filters == 1:
-    # Single filter: Show top 6 by that dimension
-    filter_key = active_filters[0]
-    dimension_map = {
-        "city": ("ci.city_name", "City"),
-        "state": ("ci.state", "State"),
-        "region": ("ci.region", "Region"),
-        "channel": ("c.channel_name", "Channel"),
-        "segment": ("cu.segment", "Segment")
-    }
+if bar_dimension:
+    # Show top 10 by selected dimension
+    col, label = bar_dimension
+    date_suffix = f" ({start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')})" if "Date" in selected_filters else ""
     
-    col, label = dimension_map[filter_key]
-    
-    # Failure Rate - Top 6
+    # Failure Rate
     fail_query = f"""
         SELECT {col} as dimension,
                COUNT(*) FILTER (WHERE f.status='failed')::float / NULLIF(COUNT(*),0) * 100 AS failure_rate
@@ -891,14 +831,14 @@ elif num_active_filters == 1:
         LEFT JOIN dim_city ci ON f.city_key = ci.city_key
         LEFT JOIN dim_customer cu ON f.customer_key = cu.customer_key
         WHERE f.date_key BETWEEN %s AND %s
+        {filter_clause}
         GROUP BY {col}
         ORDER BY failure_rate DESC
-        LIMIT 6
+        LIMIT {bar_limit}
     """
     
-    fail_data = pd.read_sql(fail_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    date_suffix = f" ({start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')})" if "Date" in selected_filters else ""
-    fail_title = (f"Failure Rate by Top 6 {label}s" if len(fail_data) == 6 else f"Failure Rate by {label}") + date_suffix
+    fail_data = pd.read_sql(fail_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))] + params)
+    fail_title = (f"Failure Rate by Top {len(fail_data)} {label}s" if len(fail_data) == bar_limit else f"Failure Rate by {label}") + date_suffix
     
     fig_fail_comp = px.bar(
         fail_data,
@@ -918,7 +858,7 @@ elif num_active_filters == 1:
     )
     st.plotly_chart(fig_fail_comp, use_container_width=True, config={'displayModeBar': False})
     
-    # Avg Processing Time - Top 6
+    # Avg Processing Time
     proc_query = f"""
         SELECT {col} as dimension,
                AVG(f.processing_time) AS avg_processing_time
@@ -927,13 +867,14 @@ elif num_active_filters == 1:
         LEFT JOIN dim_city ci ON f.city_key = ci.city_key
         LEFT JOIN dim_customer cu ON f.customer_key = cu.customer_key
         WHERE f.date_key BETWEEN %s AND %s
+        {filter_clause}
         GROUP BY {col}
         ORDER BY avg_processing_time DESC
-        LIMIT 6
+        LIMIT {bar_limit}
     """
     
-    proc_data = pd.read_sql(proc_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))])
-    proc_title = (f"Avg Processing Time by Top 6 {label}s" if len(proc_data) == 6 else f"Avg Processing Time by {label}") + date_suffix
+    proc_data = pd.read_sql(proc_query, conn, params=[int(start_date.strftime("%Y%m%d")), int(end_date.strftime("%Y%m%d"))] + params)
+    proc_title = (f"Avg Processing Time by Top {len(proc_data)} {label}s" if len(proc_data) == bar_limit else f"Avg Processing Time by {label}") + date_suffix
     
     fig_proc_comp = px.bar(
         proc_data,
@@ -952,14 +893,18 @@ elif num_active_filters == 1:
         yaxis=dict(range=[0, proc_data['avg_processing_time'].max() * 1.15])
     )
     st.plotly_chart(fig_proc_comp, use_container_width=True, config={'displayModeBar': False})
-
+    
 else:
-    # Multiple filters: Show default channel comparison
+    # Default: Show by Channel
+    date_suffix = f" ({start_date.strftime('%d-%b-%Y')} to {end_date.strftime('%d-%b-%Y')})" if "Date" in selected_filters else ""
+    
     channel_fail_query = f"""
         SELECT c.channel_name,
                COUNT(*) FILTER (WHERE f.status='failed')::float / NULLIF(COUNT(*),0) * 100 AS failure_rate
         FROM fact_transactions f
         LEFT JOIN dim_channel c ON f.channel_key = c.channel_key
+        LEFT JOIN dim_city ci ON f.city_key = ci.city_key
+        LEFT JOIN dim_customer cu ON f.customer_key = cu.customer_key
         WHERE f.date_key BETWEEN %s AND %s
         {filter_clause}
         GROUP BY c.channel_name
@@ -972,7 +917,7 @@ else:
         channel_fail,
         x='channel_name',
         y='failure_rate',
-        title=f"Failure Rate by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
+        title=f"Failure Rate by Channel{date_suffix}",
         text=channel_fail['failure_rate'].round(1).astype(str) + '%'
     )
     fig_fail_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.1f}%<extra></extra>", width=0.4, cliponaxis=False)
@@ -991,6 +936,8 @@ else:
                AVG(f.processing_time) AS avg_processing_time
         FROM fact_transactions f
         LEFT JOIN dim_channel c ON f.channel_key = c.channel_key
+        LEFT JOIN dim_city ci ON f.city_key = ci.city_key
+        LEFT JOIN dim_customer cu ON f.customer_key = cu.customer_key
         WHERE f.date_key BETWEEN %s AND %s
         {filter_clause}
         GROUP BY c.channel_name
@@ -1003,7 +950,7 @@ else:
         channel_proc,
         x='channel_name',
         y='avg_processing_time',
-        title=f"Avg Processing Time by Channel{' (' + start_date.strftime('%d-%b-%Y') + ' to ' + end_date.strftime('%d-%b-%Y') + ')' if 'Date' in selected_filters else ''}",
+        title=f"Avg Processing Time by Channel{date_suffix}",
         text=channel_proc['avg_processing_time'].round(2).astype(str) + 's'
     )
     fig_proc_comp.update_traces(textposition='outside', hovertemplate="%{x}<br>%{y:.2f}s<extra></extra>", width=0.4, cliponaxis=False)

@@ -4,7 +4,7 @@ A production-grade ETL pipeline for processing transactional data with automated
 
 ## Architecture
 
-```
+```text
 ┌─────────────┐    ┌──────────────┐    ┌──────────────┐    ┌─────────────┐
 │  Ingestion  │───▶│Transformation│───▶│  Warehouse   │───▶│  Dashboard  │
 │   (CSV)     │    │  (Parquet)   │    │   (Neon DB)  │    │ (Streamlit) │
@@ -13,7 +13,7 @@ A production-grade ETL pipeline for processing transactional data with automated
 
 ## Features
 
-- **Automated Daily Pipeline**: GitHub Actions workflow runs at 2 AM UTC
+- **Automated Daily Pipeline**: GitHub Actions workflow runs at 1 AM UTC
 - **Synthetic Data Generation**: 500 transactions/day across 4 payment channels
 - **Data Quality**: Deduplication, validation, and error handling with retry logic
 - **Star Schema**: Optimized dimensional model (fact + dimension tables)
@@ -22,7 +22,7 @@ A production-grade ETL pipeline for processing transactional data with automated
 
 ## Project Structure
 
-```
+```text
 batch-analytics-platform/
 ├── ingestion/
 │   ├── ingest.py              # Generate synthetic transactions
@@ -143,6 +143,7 @@ Access at `https://batch-analytics-platform.streamlit.app`
 - Outputs to `data/raw/YYYY/MM/DD/transactions.csv`
 - Retry logic: 3 attempts with 2-second delays
 
+
 ### 2. Transformation (`transformation/transform.py`)
 
 - Removes duplicates
@@ -152,6 +153,7 @@ Access at `https://batch-analytics-platform.streamlit.app`
 - Calculates revenue: `amount × (fee_percent / 100)`
 - Outputs to `data/processed/YYYY/MM/DD/cleaned_transactions.parquet`
 
+
 ### 3. Warehouse Load (`warehouse/load.py`)
 
 - Upserts to dim_date, dim_channel, fact_transactions
@@ -159,51 +161,71 @@ Access at `https://batch-analytics-platform.streamlit.app`
 - Uses temporary staging tables for atomic operations
 - Connection pooling with retry logic
 
+
 ### 4. Dashboard (`dashboard/app.py`)
 
 **KPIs:**
+
 - Total Revenue (successful transactions only)
 - Failure Rate
 - Average Processing Time
 
 **Dynamic Filters:**
-- Date range selector
-- City/State/Region (cascading filters)
-- Channel
-- Customer Segment
+
+- Date range selector (start/end date)
+- City/State/Region (cascading single-select filters)
+- Channel (single-select)
+- Customer Segment (single-select)
+- Horizontal filter layout with dynamic spacing
 
 **Trend Charts:**
+
 - Revenue trend with 7-day moving average
 - Failure rate trend with 7-day moving average
 - Avg processing time trend with 7-day moving average
 - Dynamic breakdown: Shows top 4 items when filter set to "All"
+- Date range displayed in chart titles when Date filter is active
 
 **Comparison Charts:**
+
 - Default: Failure Rate & Avg Processing Time by Channel
-- Single filter: Top 6 items by selected dimension
-- Adaptive titles based on data availability
+- When City/State/Region/Segment filter set to "All": Shows top 10 items by that dimension
+- Adaptive titles showing dimension and date range
+- Bar charts with value labels
 
 **Features:**
-- Multi-dimensional filtering with cascading options
+
+- Multi-dimensional filtering with cascading options (Region → State → City)
 - Glass morphism UI design
 - Interactive hover tooltips with series names
 - Horizontal legends positioned inside charts
-- Auto-refresh every 10 minutes
+- Auto-refresh every 10 minutes (cached queries)
 - Responsive layout
+- Date range context in all chart titles
+
 
 ## CI/CD
 
 GitHub Actions workflow (`.github/workflows/pipeline.yml`):
 
 ```yaml
-Trigger: Daily at 2 AM IST + Manual dispatch
+Trigger: Daily at 1 AM UTC (6:30 AM IST) + Manual dispatch
 Steps:
   1. Checkout code
   2. Install dependencies
-  3. Run ingestion (transactions + customers)
-  4. Transform data
-  5. Load to warehouse (facts + dimensions)
+  3. Run ingestion → Commit raw data
+  4. Transform data → Commit processed data
+  5. Ingest customer dimension → Commit dimension data
+  6. Load to warehouse (facts + dimensions)
 ```
+
+**Workflow Features:**
+
+- Incremental commits after each stage
+- Automated git push for data persistence
+- Environment secrets for database connection
+- Graceful handling of no-change scenarios
+
 
 ## Data Flow
 
@@ -229,15 +251,18 @@ Steps:
 ## Monitoring
 
 Check logs:
+
 ```bash
 tail -f logs/ingestion.log
 tail -f logs/processing.log
 tail -f logs/load_to_neon.log
 ```
 
+
 ## Dependencies
 
 Core libraries:
+
 - `pandas`: Data manipulation
 - `pyarrow`: Parquet I/O
 - `sqlalchemy`: Database ORM
