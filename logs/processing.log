@@ -26,3 +26,5 @@ Trying to import the above resulted in these errors:
 2026-02-19 11:42:44,623 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: C:\Users\Aryan Sahu\Documents\App Installer\mintifi_bnpl\batch-analytics-platform\data\processed\2026\02\18\cleaned_transactions.parquet
 2026-02-19 11:44:58,088 - INFO - Starting transformation for 2026-02-18
 2026-02-19 11:44:58,263 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: C:\Users\Aryan Sahu\Documents\App Installer\mintifi_bnpl\batch-analytics-platform\data\processed\2026\02\18\cleaned_transactions.parquet
+2026-02-22 03:32:12,392 - INFO - Starting transformation for 2026-02-21
+2026-02-22 03:32:12,412 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/02/21/cleaned_transactions.parquet
