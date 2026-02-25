@@ -32,3 +32,5 @@ Trying to import the above resulted in these errors:
 2026-02-23 03:35:53,243 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/02/22/cleaned_transactions.parquet
 2026-02-24 03:31:38,684 - INFO - Starting transformation for 2026-02-23
 2026-02-24 03:31:38,705 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/02/23/cleaned_transactions.parquet
+2026-02-25 03:31:54,225 - INFO - Starting transformation for 2026-02-24
+2026-02-25 03:31:54,245 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/02/24/cleaned_transactions.parquet
