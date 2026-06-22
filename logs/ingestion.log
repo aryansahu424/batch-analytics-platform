@@ -264,3 +264,5 @@
 2026-06-20 05:03:25,104 - INFO - Ingestion successful | Date: 2026-06-19 | Records: 500 | File: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/raw/2026/06/19/transactions.csv
 2026-06-21 05:52:55,047 - INFO - Starting ingestion for 2026-06-20
 2026-06-21 05:52:55,060 - INFO - Ingestion successful | Date: 2026-06-20 | Records: 500 | File: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/raw/2026/06/20/transactions.csv
+2026-06-22 06:22:19,185 - INFO - Starting ingestion for 2026-06-21
+2026-06-22 06:22:19,197 - INFO - Ingestion successful | Date: 2026-06-21 | Records: 500 | File: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/raw/2026/06/21/transactions.csv
