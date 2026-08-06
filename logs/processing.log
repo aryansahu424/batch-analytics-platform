@@ -356,3 +356,5 @@ Trying to import the above resulted in these errors:
 2026-08-04 03:57:50,374 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/03/cleaned_transactions.parquet
 2026-08-05 03:53:19,265 - INFO - Starting transformation for 2026-08-04
 2026-08-05 03:53:19,286 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/04/cleaned_transactions.parquet
+2026-08-06 03:58:11,839 - INFO - Starting transformation for 2026-08-05
+2026-08-06 03:58:11,862 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/05/cleaned_transactions.parquet
