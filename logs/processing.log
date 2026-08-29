@@ -402,3 +402,5 @@ Trying to import the above resulted in these errors:
 2026-08-27 10:45:47,721 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/26/cleaned_transactions.parquet
 2026-08-28 12:23:01,690 - INFO - Starting transformation for 2026-08-27
 2026-08-28 12:23:01,711 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/27/cleaned_transactions.parquet
+2026-08-29 07:32:32,911 - INFO - Starting transformation for 2026-08-28
+2026-08-29 07:32:32,930 - INFO - Transformation successful | Initial Records: 500 | Final Records: 500 | Output: /home/runner/work/batch-analytics-platform/batch-analytics-platform/data/processed/2026/08/28/cleaned_transactions.parquet
